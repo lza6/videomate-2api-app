@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Phota3A 2API Demo</title>
+<style>
+body{font-family:system-ui;max-width:900px;margin:30px auto;padding:0 16px;background:#111;color:#eee}
+h1{color:#a78bfa}h2{color:#93c5fd;margin-top:32px}
+input,textarea{width:100%;box-sizing:border-box;background:#1e1e2e;color:#eee;border:1px solid #444;border-radius:6px;padding:8px;margin:4px 0}
+button{background:#7c3aed;color:#fff;border:0;border-radius:6px;padding:10px 20px;cursor:pointer;margin:8px 4px 8px 0}
+button:hover{background:#8b5cf6}
+pre{background:#1a1a2a;padding:12px;border-radius:8px;overflow:auto;max-height:400px;font-size:12px}
+.badge{display:inline-block;background:#312e81;border-radius:10px;padding:2px 10px;font-size:12px;color:#c4b5fd}
+.row{display:flex;gap:8px}.row>*{flex:1}
+</style>
+</head>
+<body>
+<h1>🎬 Phota3A 2API Demo <span class="badge">sci.videomate.cc</span></h1>
+<p>sign = md5("gmdh1Z" + ts) · cp=com.mivii.mvlite.editor · 已实测签名通过</p>
+
+<h2>1. 原生端点透传</h2>
+<label>路径 (如 /algo/v1/faceFusion/aigc/queryAiCustomizeTask)</label>
+<input id="path" value="/algo/v1/faceFusion/aigc/queryAiPhotoModels">
+<label>JSON Body</label>
+<textarea id="body" rows="3">{}</textarea>
+<button onclick="callNative()">发送</button>
+<pre id="native-out">等待请求…</pre>
+
+<h2>2. 图生视频 (image2VideoCreateV2)</h2>
+<label>图片 URL 列表 (每行一个)</label>
+<textarea id="imgs" rows="2">https://res.ufotosoft.com/common/img/1742469413191_UF2503201fbdbe96-f445-4bfe-bdc0-2bd20a3daf22.jpg</textarea>
+<button onclick="createVideo()">创建任务</button>
+<button onclick="queryLast()">查询上次任务</button>
+<pre id="video-out">等待请求…</pre>
+
+<script>
+const BASE = location.origin;
+async function callNative(){
+  const out = document.getElementById('native-out');
+  out.textContent = '请求中…';
+  try{
+    const r = await fetch(BASE + document.getElementById('path').value, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: document.getElementById('body').value || '{}'
+    });
+    out.textContent = r.status + '\n' + JSON.stringify(await r.json(), null, 2);
+  }catch(e){ out.textContent = 'ERR ' + e; }
+}
+let lastJob = null;
+async function createVideo(){
+  const out = document.getElementById('video-out');
+  out.textContent = '创建中…';
+  const imgs = document.getElementById('imgs').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  try{
+    const r = await fetch(BASE + '/v1/images2video', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({image_urls: imgs})
+    });
+    const j = await r.json();
+    lastJob = j._job_ref;
+    out.textContent = r.status + '\n' + JSON.stringify(j, null, 2);
+  }catch(e){ out.textContent = 'ERR ' + e; }
+}
+async function queryLast(){
+  const out = document.getElementById('video-out');
+  if(!lastJob){ out.textContent = '先创建任务'; return; }
+  const r = await fetch(BASE + '/v1/tasks/' + lastJob);
+  out.textContent = r.status + '\n' + JSON.stringify(await r.json(), null, 2);
+}
+</script>
+</body>
+</html>

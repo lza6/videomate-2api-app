@@ -1,0 +1,9 @@
+apk_extracted/
+jadx_out/
+manifest_out/
+tmp/
+*.apk
+*.log
+demo.log
+jadx.log
+frida18.log
